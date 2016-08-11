@@ -88,11 +88,11 @@ def getmask(imgpath):
                 pixels[x, y] = 0
             else:
                 pixels[x, y] = 255
-    # 显示
-    grayimg.show()
-    # 图片保存
-    imgname = str(random.randint(0, 1000)) + '.jpg'
-    grayimg.save(imgname)
+    # # 显示
+    # grayimg.show()
+    # # 图片保存
+    # imgname = str(random.randint(0, 1000)) + '.jpg'
+    # grayimg.save(imgname)
 
 if __name__ == "__main__":
     getmask("retinal.jpg")
