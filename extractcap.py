@@ -92,6 +92,8 @@ def MorphologicalClose(binaryimg, diskradius = 1, pointcounts = 1):
 
 
 # 异或运算， 获取小血管坐标
+# 参数：originimg：原图片
+#      erosimg：处理后的图片
 def xor_extractcap(originimg, erosimg):
     originimg.show()
     erosimg.show()
