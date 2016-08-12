@@ -2,6 +2,8 @@
 from PIL import Image
 
 from otsu import getGray
+from skimage import morphology,data,color
+import matplotlib.pyplot as plt
 
 __author__ = 'tanghan'
 
@@ -119,6 +121,9 @@ def xor_extractcap(originimg, erosimg):
                 e_pixels[x, y] = 255
     return erosimg
 
+# 细化骨架提取， 提取血管骨架以便连接
+# def imageskeletonminimization
+
 # 去噪点
 def removenoise(binaryimg, radius = 1, pointcounts = 2):
     pixels = binaryimg.load()
@@ -153,6 +158,7 @@ def removenoise(binaryimg, radius = 1, pointcounts = 2):
 
 if __name__ == "__main__":
     bimg = getGray("labels-ah/im0001.ah.ppm")
+    bimg.show()
     # pixels = bimg.load()
     # imgsize = bimg.size
     # t = []
@@ -178,6 +184,6 @@ if __name__ == "__main__":
     # erosimg = xor_extractcap(bimg, erosimg)
     # erosimg = erosion(erosimg, diskradius=1, pointcounts=2)
     # removenoise(erosimg)
-    bimg.show()
+    # bimg.show()
     img = MorphologicalOpening(bimg, diskradius=2, pointcounts=7)
-    MorphologicalClose(img, diskradius=2, pointcounts=7).show()
+    img = MorphologicalClose(img, diskradius=2, pointcounts=7).show()
