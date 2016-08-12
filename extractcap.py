@@ -15,7 +15,7 @@ __author__ = 'tanghan'
 '''
 
 # 腐蚀, 采用矩形结构元
-def erosion(binimg, diskradius=1, pointcounts = 6):
+def erosion(binimg, diskradius=1, pointcounts = 1):
     pixels = binimg.load()
     imgsize = binimg.size
     imgpix = []
@@ -49,7 +49,46 @@ def erosion(binimg, diskradius=1, pointcounts = 6):
     return tempimg
 
 # 形态学 膨胀操作
-def dilation(binimg, diskradius=1, pointcounts=6):
+def dilation(binimg, diskradius=1, pointcounts=1):
+    pixels = binimg.load()
+    imgsize = binimg.size
+    imgpix = []
+    for y in xrange(0, imgsize[1]):
+        temp = []
+        for x in xrange(0, imgsize[0]):
+            # 探测的像素点总数
+            totalpoints = 0
+            # 背景点数
+            colorpoints = 0
+            for m in xrange(x - diskradius, x + diskradius + 1):
+                for n in xrange(y - diskradius, y + diskradius + 1):
+                    if (m >= 0 and m <= imgsize[0] - 1) and (n >= 0 and n <= imgsize[1] - 1) and (m != x and n != y):
+                        totalpoints = totalpoints + 1
+                        if pixels[m, n] == 255:
+                            colorpoints = colorpoints + 1
+            if colorpoints >= pointcounts:
+                temp.append(1)
+            else:
+                temp.append(0)
+        imgpix.append(temp)
+    tempimg = getGray('template.png').resize((imgsize[0], imgsize[1]))
+
+    pixels = tempimg.load()
+    for y in xrange(0, len(imgpix)):
+        for x in xrange(0, len(imgpix[0])):
+            if imgpix[y][x] == 0:
+                pixels[x, y] = 0
+            else:
+                pixels[x, y] = 255
+    return tempimg
+
+# 形态学 开运算
+def MorphologicalOpening(binaryimg, diskradius = 1, pointcounts = 1):
+    return dilation(erosion(binimg=binaryimg, diskradius=diskradius, pointcounts=pointcounts), diskradius=diskradius, pointcounts=pointcounts)
+
+# 形态学闭运算
+def MorphologicalClose(binaryimg, diskradius = 1, pointcounts = 1):
+    return erosion(dilation(binimg=binaryimg, diskradius=diskradius, pointcounts=pointcounts), diskradius=diskradius, pointcounts=pointcounts)
 
 
 # 异或运算， 获取小血管坐标
@@ -79,25 +118,21 @@ def xor_extractcap(originimg, erosimg):
     return erosimg
 
 # 去噪点
-def removenoise(binaryimg):
-    binaryimg.show()
+def removenoise(binaryimg, radius = 1, pointcounts = 2):
     pixels = binaryimg.load()
     imgsize = binaryimg.size
-    radius = 1
     pix = []
     for y in xrange(imgsize[1]):
         temp = []
         for x in xrange(imgsize[0]):
             if pixels[x, y] == 255:
                 points = 0
-                for m in xrange(x-1, x+2):
-                    for n in xrange(y-1, y+2):
-
+                for m in xrange(x-radius, x+radius+1):
+                    for n in xrange(y-radius, y+radius+1):
                         if (m >= 0 and m <= imgsize[0] -1) and (n >= 0 and n <= imgsize[1]-1) and (m != x and n != y):
-                            if (m == x and n == y-1) or () or () or ():
-                                if pixels[m, n] == 255:
-                                    points += 1
-                if points >= 2:
+                            if pixels[m, n] == 255:
+                                points += 1
+                if points >= pointcounts:
                     temp.append(1)
                 else:
                     temp.append(0)
@@ -112,7 +147,7 @@ def removenoise(binaryimg):
             else:
                 pixels[x, y] = 255
 
-    binaryimg.show()
+    return binaryimg
 
 if __name__ == "__main__":
     bimg = getGray("labels-ah/im0001.ah.ppm")
@@ -132,9 +167,15 @@ if __name__ == "__main__":
     #         for y in xrange(len(t[0])):
     #             txtfile.write(str(t[x][y]))
     #         txtfile.write('\n')
-    erosimg = erosion(bimg, diskradius=2)
-    erosimg.show()
+    # erosimg = erosion(bimg, diskradius=2, pointcounts=5)
+    # erosimg.show()
+    # erosimg.show()
+    # erosimg = erosion(erosimg, diskradius=1, pointcounts=2)
+    # erosimg = removenoise(erosimg, radius=2, pointcounts=4).show()
+    # dilation(erosimg, diskradius=2, pointcounts=7).show()
     # erosimg = xor_extractcap(bimg, erosimg)
     # erosimg = erosion(erosimg, diskradius=1, pointcounts=2)
     # removenoise(erosimg)
-
+    bimg.show()
+    img = MorphologicalOpening(bimg, diskradius=2, pointcounts=7)
+    MorphologicalClose(img, diskradius=2, pointcounts=7).show()
