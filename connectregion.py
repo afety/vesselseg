@@ -21,6 +21,7 @@ class ConnectionRegion:
 
     # 膨胀操作
     def dilation(self, img):
+
         size = img.size
         pixels = img.load()
 
@@ -49,9 +50,10 @@ class ConnectionRegion:
                     (resultimg.load())[x, y] = 0
         return resultimg
 
-    # 图片求并集
+    # 图片求交集
     def intersectionimgs(self, img1, img2):
-        resultimg = img1.copy()
+        resultimg = img2.copy()
+
         for y in xrange(self.size[1]):
             for x in xrange(self.size[0]):
                 if (img1.load())[x, y] == (img2.load())[x, y] == 255:
@@ -59,6 +61,7 @@ class ConnectionRegion:
                 else:
                     (resultimg.load())[x, y] = 0
 
+        print 'Intersection'
         return resultimg
 
     # 图片相同比对
@@ -73,7 +76,9 @@ class ConnectionRegion:
 
     # 连通区域计算单元
     def __unit(self, img):
-        return (self.intersectionimgs(self.dilation(img), self.img))
+        dimg = self.dilation(img)
+        A = self.img.copy()
+        return self.intersectionimgs(dimg, A)
 
     # 连通区域计算
     def connectionregion(self):
@@ -93,6 +98,5 @@ class ConnectionRegion:
                 print 'Equal and Exit'
                 return tempimg
             img = tempimg
-            img.show()
             k += 1
             print '循环次数:', k
