@@ -1,6 +1,8 @@
 # coding: utf8
 from PIL import Image
 
+from SkeletonExtracting import SkeletonExtracting
+from connectregion import ConnectionRegion
 from otsu import getGray
 from skimage import morphology,data,color
 import matplotlib.pyplot as plt
@@ -15,6 +17,45 @@ __author__ = 'tanghan'
     补充：
         形态学开闭运算在而知图像处理中的应用
 '''
+
+# 腐蚀， 结构元采取矩形结构，且width > height
+def erosion_wh(binimg, wh_dict):
+    if not isinstance(wh_dict, dict):
+        print 'wh_dict must be like {"width":x, "height": x}'
+        exit(-1)
+    width = wh_dict['width']
+    height = wh_dict['height']
+
+    #图片像素值
+    pixels = binimg.load()
+    #图片尺寸
+    size = binimg.size
+
+    #结果储存
+    pix = []
+    for y in xrange(size[1]):
+        temp = []
+        for x in xrange(size[0]):
+            bgpoints = 0
+            for m in xrange(x-width, x+width+1):
+                for n in xrange(y-height, y+height+1):
+                    if (m >= 0 and m <= size[0] -1) and ( n >= 0 and n <= size[1] -1):
+                        if pixels[m, n] == 0:
+                            bgpoints += 1
+            if bgpoints == 0:
+                temp.append(1)
+            else:
+                temp.append(0)
+
+        pix.append(temp)
+    tempimg = Image.open('template.png').convert('L').resize((size[0], size[1]))
+    for y in xrange(len(pix)):
+        for x in xrange(len(pix[0])):
+            if pix[y][x] == 0:
+                (tempimg.load())[x, y] = 0
+            else:
+                (tempimg.load())[x, y] = 255
+    return tempimg
 
 # 腐蚀, 采用矩形结构元
 def erosion(binimg, diskradius=1, pointcounts = 1):
@@ -49,6 +90,48 @@ def erosion(binimg, diskradius=1, pointcounts = 1):
             else:
                 pixels[x, y] = 255
     return tempimg
+
+# 膨胀操作， wh_dict结构元长宽
+def dilation_wh(binimg, wh_dict):
+    if not isinstance(wh_dict, dict):
+        print 'wh_dict must be like {"width": x,"height": x}'
+        exit(-1)
+    # 结构元尺寸
+    width = wh_dict['width']
+    height = wh_dict['height']
+
+    # 图片像素
+    pixels = binimg.load()
+    # 图片尺寸
+    size = binimg.size
+
+    #存储结果
+    pix = []
+    for y in xrange(size[1]):
+        temp = []
+        for x in xrange(size[0]):
+            points = 0
+            for m in xrange(x-width, x+width+1):
+                for n in xrange(y-height, y+height+1):
+                    if (m >= 0 and m <= size[0] -1) and ( n >= 0 and n <= size[1] -1) and ( m != x and n != y):
+                        if pixels[m, n] == 255:
+                            points += 1
+            if points == 0:
+                temp.append(0)
+            else:
+                temp.append(1)
+        pix.append(temp)
+
+    tempimg = getGray('template.png').resize((size[0], size[1]))
+
+    for y in xrange(0, len(pix)):
+        for x in xrange(0, len(pix[0])):
+            if pix[y][x] == 0:
+                (tempimg.load())[x, y] = 0
+            else:
+                (tempimg.load())[x, y] = 255
+    return tempimg
+
 
 # 形态学 膨胀操作
 def dilation(binimg, diskradius=1, pointcounts=1):
@@ -97,16 +180,15 @@ def MorphologicalClose(binaryimg, diskradius = 1, pointcounts = 1):
 # 参数：originimg：原图片
 #      erosimg：处理后的图片
 def xor_extractcap(originimg, erosimg):
-    originimg.show()
-    erosimg.show()
     o_pixels = originimg.load()
     e_pixels = erosimg.load()
+    resultimg = erosimg.copy()
     imgsize = originimg.size
     pix = []
     for y in xrange(imgsize[1]):
         temp = []
         for x in xrange(imgsize[0]):
-            if e_pixels[x, y] == 255 and o_pixels == 0:
+            if e_pixels[x, y] == 0 and o_pixels[x, y] == 255:
                 temp.append(1)
             else:
                 temp.append(0)
@@ -116,10 +198,10 @@ def xor_extractcap(originimg, erosimg):
     for y in xrange(0, len(pix)):
         for x in xrange(0, len(pix[0])):
             if pix[y][x] == 0:
-                e_pixels[x, y] = 0
+                (resultimg.load())[x, y] = 0
             else:
-                e_pixels[x, y] = 255
-    return erosimg
+                (resultimg.load())[x, y] = 255
+    return resultimg
 
 # 细化骨架提取， 提取血管骨架以便连接
 # def imageskeletonminimization
@@ -158,32 +240,12 @@ def removenoise(binaryimg, radius = 1, pointcounts = 2):
 
 if __name__ == "__main__":
     bimg = getGray("labels-ah/im0001.ah.ppm")
-    bimg.show()
-    # pixels = bimg.load()
-    # imgsize = bimg.size
-    # t = []
-    # for x in xrange(imgsize[0]):
-    #     s = []
-    #     for y in xrange(imgsize[1]):
-    #         if pixels[x, y] == 255:
-    #             s.append(0)
-    #         else:
-    #             s.append(1)
-    #     t.append(s)
-    # with open('test.txt', 'wb') as txtfile:
-    #     for x in xrange(len(t)):
-    #         for y in xrange(len(t[0])):
-    #             txtfile.write(str(t[x][y]))
-    #         txtfile.write('\n')
-    # erosimg = erosion(bimg, diskradius=2, pointcounts=5)
-    # erosimg.show()
-    # erosimg.show()
-    # erosimg = erosion(erosimg, diskradius=1, pointcounts=2)
-    # erosimg = removenoise(erosimg, radius=2, pointcounts=4).show()
-    # dilation(erosimg, diskradius=2, pointcounts=7).show()
-    # erosimg = xor_extractcap(bimg, erosimg)
-    # erosimg = erosion(erosimg, diskradius=1, pointcounts=2)
-    # removenoise(erosimg)
-    # bimg.show()
-    img = MorphologicalOpening(bimg, diskradius=2, pointcounts=7)
-    img = MorphologicalClose(img, diskradius=2, pointcounts=7).show()
+    # skeleton = SkeletonExtracting(binimg=bimg)
+    # skeleton.skeletonext().show()
+    img = MorphologicalOpening(binaryimg=bimg, diskradius=2, pointcounts=6)
+    img = xor_extractcap(bimg, dilation_wh(img, {'width': 2, 'height': 2}))
+    # ske = SkeletonExtracting(img)
+    # img = ske.skeletonext()
+    cr = ConnectionRegion(binaryimg=img)
+    img = cr.connectionregion()
+    img.show()
