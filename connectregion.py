@@ -54,10 +54,10 @@ class ConnectionRegion:
         resultimg = img1.copy()
         for y in xrange(self.size[1]):
             for x in xrange(self.size[0]):
-                if img1[x, y] == img2[x, y]:
-                    resultimg[x,y] = img1[x, y]
+                if (img1.load())[x, y] == (img2.load())[x, y] == 255:
+                    (resultimg.load())[x, y] = 255
                 else:
-                    resultimg[x, y] = 0
+                    (resultimg.load())[x, y] = 0
 
         return resultimg
 
@@ -66,9 +66,9 @@ class ConnectionRegion:
         points = 0
         for y in xrange(self.size[1]):
             for x in xrange(self.size[0]):
-                if (img1.load())[x, y] == (img2.load())[x, y]:
+                if (img1.load())[x, y] != (img2.load())[x, y]:
                     points += 1
-
+        print 'points：', points
         return points == 0
 
     # 连通区域计算单元
@@ -77,10 +77,22 @@ class ConnectionRegion:
 
     # 连通区域计算
     def connectionregion(self):
-        img = self.img
+        img = self.img.copy()
+        ass = False
+        for y in xrange(self.size[1]):
+            for x in xrange(self.size[0]):
+                if (img.load())[x, y] == 255 and not ass:
+                    (img.load())[x, y] = 255
+                    ass = True
+                else:
+                    (img.load())[x, y] = 0
+        k = 0
         while True:
             tempimg = self.__unit(img)
             if self.__isequal(tempimg, img):
+                print 'Equal and Exit'
                 return tempimg
-            else:
-                img = tempimg
+            img = tempimg
+            img.show()
+            k += 1
+            print '循环次数:', k
