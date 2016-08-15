@@ -246,7 +246,5 @@ if __name__ == "__main__":
     img = xor_extractcap(bimg, dilation_wh(img, {'width': 2, 'height': 2}))
     # ske = SkeletonExtracting(img)
     # img = ske.skeletonext()
-    img.show()
     cr = ConnectionRegion(binaryimg=img)
-    img = cr.connectionregion()
-    img.show()
+    conregion = cr.regionext()
